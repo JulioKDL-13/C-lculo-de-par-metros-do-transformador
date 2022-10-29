@@ -1,0 +1,278 @@
+#include <iostream>
+#include <math.h>
+using namespace std;
+
+float dadostransformador()
+{
+    char tipo;
+    float VnomAT, VnomBT, SN; //valores nominais
+    float P0, V0, I0, Pcc, Vcc, Icc; //dados de ensaio
+    float RM, XM, R1, R1_ref75, X1, keng, tensaio, RM_AT, XM_AT, R1_BT, X1_BT; //parametros do transformador
+    float RMpu, XMpu, R1pu, Z1pu, X1pu, RMpu_, XMpu_, R1pu_, R1pu_ref75, Z1pu_, X1pu_, ZbAT, ZbBT;//parametros do transformador em pu
+    cout<<"Tipo do transformador (monofasico - M ou trifasico - T): ";
+    cin>>tipo;
+    if(tipo=='M' || tipo=='m')
+    {
+        cout<<"\n-----------PARAMETROS GERAIS DO TRANSFORMADOR-----------"<<endl;
+        cout<<endl;
+        cout<<"* Potencia aparente do transformador (VA): ";
+        cin>>SN;
+        cout<<"* Tensao nominal no lado de alta do transformador (V): ";
+        cin>>VnomAT;
+        cout<<"* Tensao nominal no lado de baixa do transformador (V): ";
+        cin>>VnomBT;
+
+        cout<<"\n-----------DADOS DE ENSAIO DO TRANSFORMADOR-----------"<<endl;
+        cout<<endl;
+        cout<<"* Potencia do transformador para ensaio a vazio (W): ";
+        cin>>P0;
+        cout<<"* Tensao para ensaio a vazio (V): ";
+        cin>>V0;
+        cout<<"* Corrente para ensaio a vazio (A): ";
+        cin>>I0;
+        cout<<"* Potencia do transformador para ensaio em curto (W): ";
+        cin>>Pcc;
+        cout<<"* Tensao para ensaio em curto (V): ";
+        cin>>Vcc;
+        cout<<"* Corrente para ensaio em curto (A): ";
+        cin>>Icc;
+        cout<<"* Temperatura de realizacao dos testes (graus Celsius): ";
+        cin>>tensaio;
+        cout<<"* Fator de correcao de temperatura (225 - aluminio e 235 - cobre): ";
+        cin>>keng;
+        cout<<endl;
+
+        RM=pow(V0,2)/P0;
+        XM=pow(V0,2)/sqrt(pow((V0*I0),2)-pow(P0,2));
+        R1=Pcc/pow(Icc,2);
+        X1=(sqrt(pow((Vcc*Icc),2)-pow(Pcc,2)))/pow(Icc,2);
+        R1_ref75=((keng+75)/(keng+tensaio))*R1;
+        RM_AT=(RM*pow((VnomAT/VnomBT),2))/1000;
+        XM_AT=(XM*pow((VnomAT/VnomBT),2))/1000;
+        R1_BT=(R1_ref75*pow((VnomBT/VnomAT),2))*1000;
+        X1_BT=(X1*pow((VnomBT/VnomAT),2))*1000;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE ALTA - Modelo completo: "<<endl;
+        cout<<"| Rm = "<<RM_AT<<"K ";
+        cout<<"  Xm = "<<XM_AT<<"K"<<endl;
+        cout<<"| r1 = "<<(R1_ref75/2);
+        cout<<"   x1 = "<<(X1/2)<<endl;
+        cout<<"| r2 = "<<(R1_ref75/2);
+        cout<<"   x2 = "<<(X1/2)<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE BAIXA - Modelo completo: "<<endl;
+        cout<<"| Rm = "<<RM;
+        cout<<"   Xm = "<<XM<<endl;
+        cout<<"| r1 = "<<(R1_BT/2)<<"m";
+        cout<<"   x1 = "<<(X1_BT/2)<<"m"<<endl;
+        cout<<"| r2 = "<<(R1_BT/2)<<"m";
+        cout<<"   x2 = "<<(X1_BT/2)<<"m"<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROSDO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 1: "<<endl;
+        cout<<"| Rm = "<<RM_AT<<"K ";
+        cout<<"  Xm = "<<XM_AT<<"K"<<endl;
+        cout<<"| R1 = "<<R1_ref75;
+        cout<<"   X1 = "<<X1<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROSDO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 1: "<<endl;
+        cout<<"| Rm = "<<RM;
+        cout<<"   Xm = "<<XM<<endl;
+        cout<<"| R1 = "<<R1_BT<<"m ";
+        cout<<"  X1 = "<<X1<<"m"<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 2: "<<endl;
+        cout<<"| R1 = "<<R1_ref75;
+        cout<<"   X1 = "<<X1<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 2: "<<endl;
+        cout<<"| R1 = "<<R1_BT<<"m ";
+        cout<<"  X1 = "<<X1<<"m"<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR EM PU:"<<endl;
+        //Equação direta
+        RMpu=SN/P0;
+        XMpu=SN/sqrt(pow((V0*I0),2)-pow(P0,2));
+        R1pu=Pcc/SN;
+        Z1pu=Vcc/VnomAT;
+        X1pu=sqrt(pow(Z1pu,2)-pow(R1pu,2));
+        R1pu_ref75=((keng+75)/(keng+tensaio))*R1pu;
+
+        cout<<"\n* Calculo direto: "<<endl;
+        cout<<"Rmpu: "<<RMpu;
+        cout<<"   Xmpu: "<<XMpu<<endl;
+        cout<<"R1pu (corrigido): "<<R1pu_ref75;
+        cout<<"   Z1pu (sem correcao): "<<Z1pu;
+        cout<<"   X1pu: "<<X1pu;
+        cout<<endl;
+        //Equação pelas bases
+        ZbBT=pow(VnomBT,2)/SN;
+        ZbAT=pow(VnomAT,2)/SN;
+        RMpu_=RM/ZbBT;
+        XMpu_=XM/ZbBT;
+        Z1pu_=sqrt(pow(X1,2)-pow(R1_ref75,2))/ZbAT;
+        R1pu_=R1_ref75/ZbAT;
+        X1pu_=sqrt(pow(Z1pu_,2)-pow(R1pu_,2));
+
+        cout<<"\n* Calculo pelas bases (Sb ZbAT e ZbBT): "<<endl;
+        cout<<"Rmpu: "<<RMpu_;
+        cout<<"   Xmpu: "<<XMpu_<<endl;
+        cout<<"R1pu (corrigido): "<<R1pu_;
+        cout<<"   Z1pu (corrigido): "<<Z1pu_;
+        cout<<"   X1pu: "<<X1pu_;
+
+        cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo completo: "<<endl;
+        cout<<"| Rmpu = "<<RMpu_;
+        cout<<"   Xmpu = "<<XMpu_<<endl;
+        cout<<"| r1pu = "<<(R1pu_/2);
+        cout<<"   x1pu = "<<(X1_BT/2)<<endl;
+        cout<<"| r2pu = "<<(R1pu_/2);
+        cout<<"   x2pu = "<<(X1pu_/2)<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROSDO TRANSFORMADOR - Modelo simplificado 1: "<<endl;
+        cout<<"| Rmpu = "<<RMpu_;
+        cout<<"  Xmpu = "<<XMpu_<<endl;
+        cout<<"| R1pu = "<<R1pu_;
+        cout<<"   X1pu = "<<X1pu_<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo simplificado 2: "<<endl;
+        cout<<"| R1pu = "<<R1pu_;
+        cout<<"   X1pu = "<<X1pu_<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+    }
+    else if(tipo=='T' || tipo=='t')
+    {
+        cout<<"\n-----------PARAMETROS GERAIS DO TRANSFORMADOR-----------"<<endl;
+        cout<<endl;
+        cout<<"* Potencia aparente do transformador (VA): ";
+        cin>>SN;
+        cout<<"* Tensao nominal no lado de alta do transformador (V): ";
+        cin>>VnomAT;
+        cout<<"* Tensao nominal no lado de baixa do transformador (V): ";
+        cin>>VnomBT;
+
+        cout<<"\n-----------DADOS DE ENSAIO DO TRANSFORMADOR-----------"<<endl;
+        cout<<endl;
+        cout<<"* Potencia do transformador para ensaio a vazio (W): ";
+        cin>>P0;
+        cout<<"* Tensao para ensaio a vazio (V): ";
+        cin>>V0;
+        cout<<"* Corrente para ensaio a vazio (A): ";
+        cin>>I0;
+        cout<<"* Potencia do transformador para ensaio em curto (W): ";
+        cin>>Pcc;
+        cout<<"* Tensao para ensaio em curto (V): ";
+        cin>>Vcc;
+        cout<<"* Corrente para ensaio em curto (A): ";
+        cin>>Icc;
+        cout<<"* Temperatura de realizacao dos testes (graus Celsius): ";
+        cin>>tensaio;
+        cout<<"* Fator de correcao de temperatura (225 - aluminio e 235 - cobre): ";
+        cin>>keng;
+        cout<<endl;
+
+        RM=pow(V0,2)/P0;
+        XM=pow(V0,2)/sqrt(pow((sqrt(3)*V0*I0),2)-pow(P0,2));
+        R1=(Pcc/3)/pow(Icc,2);
+        X1=((sqrt(pow((sqrt(3)*Vcc*Icc),2)-pow(Pcc,2)))/3)/pow(Icc,2);
+        R1_ref75=((keng+75)/(keng+tensaio))*R1;
+        RM_AT=(RM*pow((VnomAT/VnomBT),2))/1000;
+        XM_AT=(XM*pow((VnomAT/VnomBT),2))/1000;
+        R1_BT=(R1_ref75*pow((VnomBT/VnomAT),2))*1000;
+        X1_BT=(X1*pow((VnomBT/VnomAT),2))*1000;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE ALTA - Modelo completo: "<<endl;
+        cout<<"| Rm = "<<RM_AT<<"K ";
+        cout<<"  Xm = "<<XM_AT<<"K"<<endl;
+        cout<<"| r1 = "<<(R1_ref75/2);
+        cout<<"   x1 = "<<(X1/2)<<endl;
+        cout<<"| r2 = "<<(R1_ref75/2);
+        cout<<"   x2 = "<<(X1/2)<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE BAIXA - Modelo completo: "<<endl;
+        cout<<"| Rm = "<<RM;
+        cout<<"   Xm = "<<XM<<endl;
+        cout<<"| r1 = "<<(R1_BT/2)<<"m";
+        cout<<"   x1 = "<<(X1_BT/2)<<"m"<<endl;
+        cout<<"| r2 = "<<(R1_BT/2)<<"m";
+        cout<<"   x2 = "<<(X1_BT/2)<<"m"<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROSDO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 1: "<<endl;
+        cout<<"| Rm = "<<RM_AT<<"K ";
+        cout<<"  Xm = "<<XM_AT<<"K"<<endl;
+        cout<<"| R1 = "<<R1_ref75;
+        cout<<"   X1 = "<<X1<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROSDO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 1: "<<endl;
+        cout<<"| Rm = "<<RM;
+        cout<<"   Xm = "<<XM<<endl;
+        cout<<"| R1 = "<<R1_BT<<"m ";
+        cout<<"  X1 = "<<X1<<"m"<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 2: "<<endl;
+        cout<<"| R1 = "<<R1_ref75;
+        cout<<"   X1 = "<<X1<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 2: "<<endl;
+        cout<<"| R1 = "<<R1_BT<<"m ";
+        cout<<"  X1 = "<<X1<<"m"<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR EM PU:"<<endl;
+        //Equação direta
+        RMpu=SN/P0;
+        XMpu=SN/sqrt(pow((sqrt(3)*V0*I0),2)-pow(P0,2));
+        R1pu=Pcc/SN;
+        Z1pu=Vcc/VnomAT;
+        X1pu=sqrt(pow(Z1pu,2)-pow(R1pu,2));
+        R1pu_ref75=((keng+75)/(keng+tensaio))*R1pu;
+
+        cout<<"\n* Calculo direto: "<<endl;
+        cout<<"Rmpu: "<<RMpu;
+        cout<<"   Xmpu: "<<XMpu<<endl;
+        cout<<"R1pu (corrigido): "<<R1pu_ref75;
+        cout<<"   Z1pu (sem correcao): "<<Z1pu;
+        cout<<"   X1pu: "<<X1pu;
+        cout<<endl;
+
+        //Equação pelas bases
+        ZbBT=pow(VnomBT,2)/SN;
+        ZbAT=pow(VnomAT,2)/SN;
+        RMpu_=RM/ZbBT;
+        XMpu_=XM/ZbBT;
+        Z1pu_=sqrt(pow(X1,2)-pow(R1_ref75,2))/ZbAT;
+        R1pu_=R1_ref75/ZbAT;
+        X1pu_=sqrt(pow(Z1pu_,2)-pow(R1pu_,2));
+
+        cout<<"\n* Calculo pelas bases (Sb ZbAT e ZbBT): "<<endl;
+        cout<<"Rmpu: "<<RMpu_;
+        cout<<"   Xmpu: "<<XMpu_<<endl;
+        cout<<"R1pu (corrigido): "<<R1pu_;
+        cout<<"   Z1pu (corrigido): "<<Z1pu_;
+        cout<<"   X1pu: "<<X1pu_;
+
+        cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo completo: "<<endl;
+        cout<<"| Rmpu = "<<RMpu_;
+        cout<<"   Xmpu = "<<XMpu_<<endl;
+        cout<<"| r1pu = "<<(R1pu_/2);
+        cout<<"   x1pu = "<<(X1_BT/2)<<endl;
+        cout<<"| r2pu = "<<(R1pu_/2);
+        cout<<"   x2pu = "<<(X1pu_/2)<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROSDO TRANSFORMADOR - Modelo simplificado 1: "<<endl;
+        cout<<"| Rmpu = "<<RMpu_;
+        cout<<"  Xmpu = "<<XMpu_<<endl;
+        cout<<"| R1pu = "<<R1pu_;
+        cout<<"   X1pu = "<<X1pu_<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+        cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo simplificado 2: "<<endl;
+        cout<<"| R1pu = "<<R1pu_;
+        cout<<"   X1pu = "<<X1pu_<<endl;
+        //--------------------------------------------------------------------------------------------------------------
+    }
+    else cout<<"Codigo invalido";
+
+}
+
+int main() {
+    dadostransformador();
+    return 0;
+}
