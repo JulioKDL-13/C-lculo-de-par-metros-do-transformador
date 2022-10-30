@@ -5,10 +5,12 @@ using namespace std;
 float dadostransformador()
 {
     char tipo;
+    int i, teste;
     float VnomAT, VnomBT, SN; //valores nominais
     float P0, V0, I0, Pcc, Vcc, Icc; //dados de ensaio
     float RM, XM, R1, R1_ref75, X1, keng, tensaio, RM_AT, XM_AT, R1_BT, X1_BT; //parametros do transformador
-    float RMpu, XMpu, R1pu, Z1pu, X1pu, RMpu_, XMpu_, R1pu_, R1pu_ref75, Z1pu_, X1pu_, ZbAT, ZbBT;//parametros do transformador em pu
+    float RMpu, XMpu, R1pu, Z1pu, Z1pu_ref75, X1pu, RMpu_, XMpu_, R1pu_, R1pu_ref75, Z1pu_, X1pu_, ZbAT, ZbBT;//parametros do transformador em pu
+    float fp, InomBT, I, Reg_perc, Reg_perc_, Ren_perc, Penr, Psaida, Psaida_, Ren_perc_, V1, V2, Ang_V1, Ang_V2, Vx, Vy, V, pi=3.14;
     cout<<"Tipo do transformador (monofasico - M ou trifasico - T): ";
     cin>>tipo;
     if(tipo=='M' || tipo=='m')
@@ -68,17 +70,17 @@ float dadostransformador()
         cout<<"| r2 = "<<(R1_BT/2)<<"m";
         cout<<"   x2 = "<<(X1_BT/2)<<"m"<<endl;
         //--------------------------------------------------------------------------------------------------------------
-        cout<<"\nPARAMETROSDO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 1: "<<endl;
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 1: "<<endl;
         cout<<"| Rm = "<<RM_AT<<"K ";
         cout<<"  Xm = "<<XM_AT<<"K"<<endl;
         cout<<"| R1 = "<<R1_ref75;
         cout<<"   X1 = "<<X1<<endl;
         //--------------------------------------------------------------------------------------------------------------
-        cout<<"\nPARAMETROSDO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 1: "<<endl;
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 1: "<<endl;
         cout<<"| Rm = "<<RM;
         cout<<"   Xm = "<<XM<<endl;
         cout<<"| R1 = "<<R1_BT<<"m ";
-        cout<<"  X1 = "<<X1<<"m"<<endl;
+        cout<<"  X1 = "<<X1_BT<<"m"<<endl;
         //--------------------------------------------------------------------------------------------------------------
         cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 2: "<<endl;
         cout<<"| R1 = "<<R1_ref75;
@@ -86,7 +88,7 @@ float dadostransformador()
         //--------------------------------------------------------------------------------------------------------------
         cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 2: "<<endl;
         cout<<"| R1 = "<<R1_BT<<"m ";
-        cout<<"  X1 = "<<X1<<"m"<<endl;
+        cout<<"  X1 = "<<X1_BT<<"m"<<endl;
         //--------------------------------------------------------------------------------------------------------------
         cout<<"\nPARAMETROS DO TRANSFORMADOR EM PU:"<<endl;
         //Equação direta
@@ -96,12 +98,13 @@ float dadostransformador()
         Z1pu=Vcc/VnomAT;
         X1pu=sqrt(pow(Z1pu,2)-pow(R1pu,2));
         R1pu_ref75=((keng+75)/(keng+tensaio))*R1pu;
+        Z1pu_ref75=sqrt(pow(R1pu_ref75,2)+pow(X1pu,2));
 
         cout<<"\n* Calculo direto: "<<endl;
         cout<<"Rmpu: "<<RMpu;
         cout<<"   Xmpu: "<<XMpu<<endl;
         cout<<"R1pu (corrigido): "<<R1pu_ref75;
-        cout<<"   Z1pu (sem correcao): "<<Z1pu;
+        cout<<"   Z1pu (corrigido): "<<Z1pu_ref75;
         cout<<"   X1pu: "<<X1pu;
         cout<<endl;
         //Equação pelas bases
@@ -109,7 +112,7 @@ float dadostransformador()
         ZbAT=pow(VnomAT,2)/SN;
         RMpu_=RM/ZbBT;
         XMpu_=XM/ZbBT;
-        Z1pu_=sqrt(pow(X1,2)-pow(R1_ref75,2))/ZbAT;
+        Z1pu_=sqrt(pow(X1,2)+pow(R1_ref75,2))/ZbAT;
         R1pu_=R1_ref75/ZbAT;
         X1pu_=sqrt(pow(Z1pu_,2)-pow(R1pu_,2));
 
@@ -128,16 +131,200 @@ float dadostransformador()
         cout<<"| r2pu = "<<(R1pu_/2);
         cout<<"   x2pu = "<<(X1pu_/2)<<endl;
         //--------------------------------------------------------------------------------------------------------------
-        cout<<"\nPARAMETROSDO TRANSFORMADOR - Modelo simplificado 1: "<<endl;
+        cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo simplificado 1: "<<endl;
         cout<<"| Rmpu = "<<RMpu_;
         cout<<"  Xmpu = "<<XMpu_<<endl;
         cout<<"| R1pu = "<<R1pu_;
         cout<<"   X1pu = "<<X1pu_<<endl;
         //--------------------------------------------------------------------------------------------------------------
         cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo simplificado 2: "<<endl;
-        cout<<"| R1pu = "<<R1pu_;
+        cout<<"| R1pu = "<<R1pu_<<"   Z1(%):"<<(sqrt(pow(R1pu_,2)+pow(X1pu_,2))*100);
         cout<<"   X1pu = "<<X1pu_<<endl;
         //--------------------------------------------------------------------------------------------------------------
+        cout<<"\n--------Regulacao de tensao para carregamento resistivo-indutivo--------"<<endl;
+        do{
+            cout << "\nFator de potencia para teste de regulacao de tensao: ";
+            cin >> fp;
+            InomBT = SN / VnomBT;
+            I = I0;
+            i = 1;
+
+            while (I <= InomBT) {
+                V1 = I * (R1_BT / 1000);
+                V2 = I * (X1_BT / 1000);
+                Ang_V1 = acos(fp);
+                Ang_V2 = asin(1) - acos(fp);
+                Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+                Vy = ((sin(Ang_V2)) * V2) - ((sin(Ang_V1)) * V1);
+                V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+                Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+                cout << "I " << i << ": " << I;
+                cout << "   Reg(%): " << Reg_perc << endl;
+                I = I + (0.05 * InomBT);
+                i++;
+            }
+            I=InomBT;
+            V1 = I * (R1_BT / 1000);
+            V2 = I * (X1_BT / 1000);
+            Ang_V1 = acos(fp);
+            Ang_V2 = asin(1) - acos(fp);
+            Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+            Vy = ((sin(Ang_V2)) * V2) - ((sin(Ang_V1)) * V1);
+            V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+            Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+            cout << "I " << i << ": " << I;
+            cout << "   Reg(%): " << Reg_perc << endl;
+
+            cout<<"\nContinuar teste de regulacao de tensao (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+
+        cout<<"\n--------Regulacao de tensao para carregamento resistivo-capacitivo--------"<<endl;
+        do{
+            cout << "\nFator de potencia para teste de regulacao de tensao: ";
+            cin >> fp;
+            InomBT = SN / VnomBT;
+            I = I0;
+            i = 1;
+
+            while (I <= InomBT) {
+                V1 = I * (R1_BT / 1000);
+                V2 = I * (X1_BT / 1000);
+                Ang_V1 = acos(fp);
+                Ang_V2 = asin(1) + acos(fp);
+                Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+                Vy = ((sin(Ang_V1)) * V1)+((sin(Ang_V2)) * V2);
+                V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+                Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+                cout << "I " << i << ": " << I;
+                cout << "   Reg(%): " << Reg_perc << endl;
+                I = I + (0.05 * InomBT);
+                i++;
+            }
+            I=InomBT;
+            V1 = I * (R1_BT / 1000);
+            V2 = I * (X1_BT / 1000);
+            Ang_V1 = acos(fp);
+            Ang_V2 = asin(1) + acos(fp);
+            Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+            Vy = ((sin(Ang_V2)) * V2) + ((sin(Ang_V1)) * V1);
+            V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+            Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+            cout << "I " << i << ": " << I;
+            cout << "   Reg(%): " << Reg_perc << endl;
+
+            cout<<"\nContinuar teste de regulacao de tensao (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+        cout<<"\n--------Regulacao de tensao para carregamento puramente resistivo--------"<<endl;
+        do{
+            InomBT = SN / VnomBT;
+            I = I0;
+            i = 1;
+
+            while (I <= InomBT) {
+                V1 = I * (R1_BT / 1000);
+                V2 = I * (X1_BT / 1000);
+                Ang_V1 = acos(1);
+                Ang_V2 = asin(1) - acos(1);
+                Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+                Vy = ((sin(Ang_V2)) * V2) - ((sin(Ang_V1)) * V1);
+                V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+                Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+                cout << "I " << i << ": " << I;
+                cout << "   Reg(%): " << Reg_perc << endl;
+                I = I + (0.05 * InomBT);
+                i++;
+            }
+            I=InomBT;
+            V1 = I * (R1_BT / 1000);
+            V2 = I * (X1_BT / 1000);
+            Ang_V1 = acos(1);
+            Ang_V2 = asin(1) - acos(1);
+            Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+            Vy = ((sin(Ang_V2)) * V2) - ((sin(Ang_V1)) * V1);
+            V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+            Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+            cout << "I " << i << ": " << I;
+            cout << "   Reg(%): " << Reg_perc << endl;
+
+            cout<<"\nContinuar teste de regulacao de tensao (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+
+        cout<<"\n--------RENDIMENTO DO TRANSFORMADOR PARA CARREGAMENTO RESISTIVO-INDUTIVO--------"<<endl;
+        do{
+            cout << "\nFator de potencia para calculo de rendimento: ";
+            cin >> fp;
+            InomBT = SN / VnomBT;
+            I=I0/InomBT;
+            i = 1;
+
+            while (I <= 1) {
+                Penr=pow(I,2)*R1pu_ref75;
+                Psaida=1*I*fp;
+                Ren_perc = (Psaida*SN/((Psaida*SN)+P0+(Penr*SN))) * 100;
+                cout << "I(pu) " << i << ": " << I;
+                cout << "   Rendimento (%): " << Ren_perc << endl;
+                I = I + 0.05;
+                i++;
+            }
+            I=1;
+            Penr=pow(I,2)*R1pu_ref75;
+            Psaida=1*I*fp;
+            Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+(Penr*SN))) * 100;
+            cout << "I(pu) " << i << ": " << I;
+            cout << "   Rendimento (%): " << Ren_perc << endl;
+
+            cout<<"\nContinuar calculo de rendimento (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+
+        cout<<"\n--------RENDIMENTO MAXIMO DO TRANSFORMADOR PARA CARREGAMENTO RESISTIVO-INDUTIVO--------"<<endl;
+        cout << "\nFator de potencia para calculo do rendimento maximo: ";
+        cin >> fp;
+        Pcc=(R1_ref75*pow(Icc,2));
+        I=sqrt(P0/Pcc);
+        Penr=P0;
+        Psaida=1*I*fp;
+        Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+Penr)) * 100;
+        cout << "I(pu) " << i << ": " << I;
+        cout << "   Rendimento maximo (%): " << Ren_perc << endl;
+
+        cout<<"\n--------RENDIMENTO DO TRANSFORMADOR PARA CARREGAMENTO RESISTIVO--------"<<endl;
+        do{
+            InomBT = SN / VnomBT;
+            I=I0/InomBT;
+            i = 1;
+
+            while (I <= 1) {
+                Penr=pow(I,2)*R1pu_ref75;
+                Psaida=1*I*1;
+                Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+(Penr*SN))) * 100;
+                cout << "I(pu) " << i << ": " << I;
+                cout << "   Rendimento (%): " << Ren_perc << endl;
+                I = I + 0.05;
+                i++;
+            }
+            I=1;
+            Penr=pow(I,2)*R1pu_ref75;
+            Psaida=1*I*1;
+            Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+(Penr*SN))) * 100;
+            cout << "I " << i << ": " << I;
+            cout << "   Rendimento (%): " << Ren_perc << endl;
+
+            cout<<"\nContinuar calculo de rendimento (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+
+        cout<<"\n--------RENDIMENTO MAXIMO DO TRANSFORMADOR PARA CARREGAMENTO RESISTIVO--------"<<endl;
+        Pcc=(R1_ref75*(3*pow(Icc,2)));
+        I=sqrt(P0/Pcc);
+        Penr=P0;
+        Psaida=1*I*1;
+        Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+Penr)) * 100;
+        cout << "I(pu) " << i << ": " << I;
+        cout << "   Rendimento maximo (%): " << Ren_perc << endl;
     }
     else if(tipo=='T' || tipo=='t')
     {
@@ -196,17 +383,17 @@ float dadostransformador()
         cout<<"| r2 = "<<(R1_BT/2)<<"m";
         cout<<"   x2 = "<<(X1_BT/2)<<"m"<<endl;
         //--------------------------------------------------------------------------------------------------------------
-        cout<<"\nPARAMETROSDO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 1: "<<endl;
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 1: "<<endl;
         cout<<"| Rm = "<<RM_AT<<"K ";
         cout<<"  Xm = "<<XM_AT<<"K"<<endl;
         cout<<"| R1 = "<<R1_ref75;
         cout<<"   X1 = "<<X1<<endl;
         //--------------------------------------------------------------------------------------------------------------
-        cout<<"\nPARAMETROSDO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 1: "<<endl;
+        cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 1: "<<endl;
         cout<<"| Rm = "<<RM;
         cout<<"   Xm = "<<XM<<endl;
         cout<<"| R1 = "<<R1_BT<<"m ";
-        cout<<"  X1 = "<<X1<<"m"<<endl;
+        cout<<"  X1 = "<<X1_BT<<"m"<<endl;
         //--------------------------------------------------------------------------------------------------------------
         cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE ALTA - Modelo simplificado 2: "<<endl;
         cout<<"| R1 = "<<R1_ref75;
@@ -214,7 +401,7 @@ float dadostransformador()
         //--------------------------------------------------------------------------------------------------------------
         cout<<"\nPARAMETROS DO TRANSFORMADOR NO LADO DE BAIXA - Modelo simplificado 2: "<<endl;
         cout<<"| R1 = "<<R1_BT<<"m ";
-        cout<<"  X1 = "<<X1<<"m"<<endl;
+        cout<<"  X1 = "<<X1_BT<<"m"<<endl;
         //--------------------------------------------------------------------------------------------------------------
         cout<<"\nPARAMETROS DO TRANSFORMADOR EM PU:"<<endl;
         //Equação direta
@@ -224,12 +411,13 @@ float dadostransformador()
         Z1pu=Vcc/VnomAT;
         X1pu=sqrt(pow(Z1pu,2)-pow(R1pu,2));
         R1pu_ref75=((keng+75)/(keng+tensaio))*R1pu;
+        Z1pu_ref75=sqrt(pow(R1pu_ref75,2)+pow(X1pu,2));
 
         cout<<"\n* Calculo direto: "<<endl;
         cout<<"Rmpu: "<<RMpu;
         cout<<"   Xmpu: "<<XMpu<<endl;
         cout<<"R1pu (corrigido): "<<R1pu_ref75;
-        cout<<"   Z1pu (sem correcao): "<<Z1pu;
+        cout<<"   Z1pu (corrigido): "<<Z1pu_ref75;
         cout<<"   X1pu: "<<X1pu;
         cout<<endl;
 
@@ -238,38 +426,223 @@ float dadostransformador()
         ZbAT=pow(VnomAT,2)/SN;
         RMpu_=RM/ZbBT;
         XMpu_=XM/ZbBT;
-        Z1pu_=sqrt(pow(X1,2)-pow(R1_ref75,2))/ZbAT;
+        Z1pu_=sqrt(pow(X1,2)+pow(R1_ref75,2))/ZbAT;
         R1pu_=R1_ref75/ZbAT;
         X1pu_=sqrt(pow(Z1pu_,2)-pow(R1pu_,2));
 
-        cout<<"\n* Calculo pelas bases (Sb ZbAT e ZbBT): "<<endl;
+        cout<<"\n* Calculo pelas bases (Sb, ZbAT e ZbBT): "<<endl;
         cout<<"Rmpu: "<<RMpu_;
         cout<<"   Xmpu: "<<XMpu_<<endl;
         cout<<"R1pu (corrigido): "<<R1pu_;
         cout<<"   Z1pu (corrigido): "<<Z1pu_;
-        cout<<"   X1pu: "<<X1pu_;
+        cout<<"   X1pu: "<<X1pu_<<endl;
 
         cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo completo: "<<endl;
         cout<<"| Rmpu = "<<RMpu_;
         cout<<"   Xmpu = "<<XMpu_<<endl;
         cout<<"| r1pu = "<<(R1pu_/2);
-        cout<<"   x1pu = "<<(X1_BT/2)<<endl;
+        cout<<"   x1pu = "<<(X1pu_/2)<<endl;
         cout<<"| r2pu = "<<(R1pu_/2);
         cout<<"   x2pu = "<<(X1pu_/2)<<endl;
         //--------------------------------------------------------------------------------------------------------------
-        cout<<"\nPARAMETROSDO TRANSFORMADOR - Modelo simplificado 1: "<<endl;
+        cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo simplificado 1: "<<endl;
         cout<<"| Rmpu = "<<RMpu_;
         cout<<"  Xmpu = "<<XMpu_<<endl;
         cout<<"| R1pu = "<<R1pu_;
         cout<<"   X1pu = "<<X1pu_<<endl;
         //--------------------------------------------------------------------------------------------------------------
         cout<<"\nPARAMETROS DO TRANSFORMADOR - Modelo simplificado 2: "<<endl;
-        cout<<"| R1pu = "<<R1pu_;
+        cout<<"| R1pu = "<<R1pu_<<"   Z1(%):"<<(sqrt(pow(R1pu_,2)+pow(X1pu_,2))*100);
         cout<<"   X1pu = "<<X1pu_<<endl;
         //--------------------------------------------------------------------------------------------------------------
+        cout<<"\n--------Regulacao de tensao para carregamento resistivo-indutivo--------"<<endl;
+        do{
+            cout << "\nFator de potencia para teste de regulacao de tensao: ";
+            cin >> fp;
+            InomBT = SN / (sqrt(3) * VnomBT);
+            I = I0;
+            i = 1;
+
+            while (I <= InomBT) {
+                V1 = I * (R1_BT / 1000);
+                V2 = I * (X1_BT / 1000);
+                Ang_V1 = acos(fp);
+                Ang_V2 = asin(1) - acos(fp);
+                Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+                Vy = ((sin(Ang_V2)) * V2) - ((sin(Ang_V1)) * V1);
+                V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+                Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+                cout << "I " << i << ": " << I;
+                cout << "   Reg(%): " << Reg_perc << endl;
+                I = I + (0.05 * InomBT);
+                i++;
+            }
+            I=InomBT;
+            V1 = I * (R1_BT / 1000);
+            V2 = I * (X1_BT / 1000);
+            Ang_V1 = acos(fp);
+            Ang_V2 = asin(1) - acos(fp);
+            Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+            Vy = ((sin(Ang_V2)) * V2) - ((sin(Ang_V1)) * V1);
+            V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+            Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+            cout << "I " << i << ": " << I;
+            cout << "   Reg(%): " << Reg_perc << endl;
+
+            cout<<"\nContinuar teste de regulacao de tensao (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+
+        cout<<"\n--------Regulacao de tensao para carregamento resistivo-capacitivo--------"<<endl;
+        do{
+            cout << "\nFator de potencia para teste de regulacao de tensao: ";
+            cin >> fp;
+            InomBT = SN / (sqrt(3) * VnomBT);
+            I = I0;
+            i = 1;
+
+            while (I <= InomBT) {
+                V1 = I * (R1_BT / 1000);
+                V2 = I * (X1_BT / 1000);
+                Ang_V1 = acos(fp);
+                Ang_V2 = asin(1) + acos(fp);
+                Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+                Vy = ((sin(Ang_V1)) * V1)+((sin(Ang_V2)) * V2);
+                V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+                Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+                cout << "I " << i << ": " << I;
+                cout << "   Reg(%): " << Reg_perc << endl;
+                I = I + (0.05 * InomBT);
+                i++;
+            }
+            I=InomBT;
+            V1 = I * (R1_BT / 1000);
+            V2 = I * (X1_BT / 1000);
+            Ang_V1 = acos(fp);
+            Ang_V2 = asin(1) + acos(fp);
+            Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+            Vy = ((sin(Ang_V2)) * V2) + ((sin(Ang_V1)) * V1);
+            V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+            Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+            cout << "I " << i << ": " << I;
+            cout << "   Reg(%): " << Reg_perc << endl;
+
+            cout<<"\nContinuar teste de regulacao de tensao (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+        cout<<"\n--------Regulacao de tensao para carregamento puramente resistivo--------"<<endl;
+        do{
+            InomBT = SN / (sqrt(3) * VnomBT);
+            I = I0;
+            i = 1;
+
+            while (I <= InomBT) {
+                V1 = I * (R1_BT / 1000);
+                V2 = I * (X1_BT / 1000);
+                Ang_V1 = acos(1);
+                Ang_V2 = asin(1) - acos(1);
+                Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+                Vy = ((sin(Ang_V2)) * V2) - ((sin(Ang_V1)) * V1);
+                V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+                Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+                cout << "I " << i << ": " << I;
+                cout << "   Reg(%): " << Reg_perc << endl;
+                I = I + (0.05 * InomBT);
+                i++;
+            }
+            I=InomBT;
+            V1 = I * (R1_BT / 1000);
+            V2 = I * (X1_BT / 1000);
+            Ang_V1 = acos(1);
+            Ang_V2 = asin(1) - acos(1);
+            Vx = ((cos(Ang_V1)) * V1) + ((cos(Ang_V2)) * V2) + VnomBT;
+            Vy = ((sin(Ang_V2)) * V2) - ((sin(Ang_V1)) * V1);
+            V = sqrt(pow(Vx, 2) + pow(Vy, 2));
+            Reg_perc = ((V - VnomBT) / VnomBT) * 100;
+            cout << "I " << i << ": " << I;
+            cout << "   Reg(%): " << Reg_perc << endl;
+
+            cout<<"\nContinuar teste de regulacao de tensao (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+        cout<<endl;
+
+        cout<<"\n--------RENDIMENTO DO TRANSFORMADOR PARA CARREGAMENTO RESISTIVO-INDUTIVO--------"<<endl;
+        do{
+            cout << "\nFator de potencia para calculo de rendimento: ";
+            cin >> fp;
+            InomBT = SN / (sqrt(3) * VnomBT);
+            I=I0/InomBT;
+            i = 1;
+
+            while (I <= 1) {
+                Penr=sqrt(3)*pow(I,2)*R1pu_ref75;
+                Psaida=sqrt(3)*1*I*fp;
+                Ren_perc = (Psaida*SN/((Psaida*SN)+P0+(Penr*SN))) * 100;
+                cout << "I(pu) " << i << ": " << I;
+                cout << "   Rendimento (%): " << Ren_perc << endl;
+                I = I + 0.05;
+                i++;
+            }
+            I=1;
+            Penr=sqrt(3)*pow(I,2)*R1pu_ref75;
+            Psaida=sqrt(3)*1*I*fp;
+            Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+(Penr*SN))) * 100;
+            cout << "I(pu) " << i << ": " << I;
+            cout << "   Rendimento (%): " << Ren_perc << endl;
+
+            cout<<"\nContinuar calculo de rendimento (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+
+        cout<<"\n--------RENDIMENTO MAXIMO DO TRANSFORMADOR PARA CARREGAMENTO RESISTIVO-INDUTIVO--------"<<endl;
+        cout << "\nFator de potencia para calculo do rendimento maximo: ";
+        cin >> fp;
+        Pcc=(R1_ref75*(3*pow(Icc,2)));
+        I=sqrt(P0/Pcc);
+        Penr=P0;
+        Psaida=sqrt(3)*1*I*fp;
+        Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+Penr)) * 100;
+        cout << "I(pu) " << i << ": " << I;
+        cout << "   Rendimento maximo (%): " << Ren_perc << endl;
+
+        cout<<"\n--------RENDIMENTO DO TRANSFORMADOR PARA CARREGAMENTO RESISTIVO--------"<<endl;
+        do{
+            InomBT = SN / (sqrt(3) * VnomBT);
+            I=I0/InomBT;
+            i = 1;
+
+            while (I <= 1) {
+                Penr=sqrt(3)*pow(I,2)*R1pu_ref75;
+                Psaida=sqrt(3)*1*I*1;
+                Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+(Penr*SN))) * 100;
+                cout << "I(pu) " << i << ": " << I;
+                cout << "   Rendimento (%): " << Ren_perc << endl;
+                I = I + 0.05;
+                i++;
+            }
+            I=1;
+            Penr=sqrt(3)*pow(I,2)*R1pu_ref75;
+            Psaida=sqrt(3)*1*I*1;
+            Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+(Penr*SN))) * 100;
+            cout << "I " << i << ": " << I;
+            cout << "   Rendimento (%): " << Ren_perc << endl;
+
+            cout<<"\nContinuar calculo de rendimento (SIM - 1 / NAO - 2)? ";
+            cin>>teste;
+        }while(teste==1);
+
+        cout<<"\n--------RENDIMENTO MAXIMO DO TRANSFORMADOR PARA CARREGAMENTO RESISTIVO--------"<<endl;
+        Pcc=(R1_ref75*(3*pow(Icc,2)));
+        I=sqrt(P0/Pcc);
+        Penr=P0;
+        Psaida=sqrt(3)*1*I*1;
+        Ren_perc = ((Psaida*SN)/((Psaida*SN)+P0+Penr)) * 100;
+        cout << "I(pu) " << i << ": " << I;
+        cout << "   Rendimento maximo (%): " << Ren_perc << endl;
     }
     else cout<<"Codigo invalido";
-
+    return 0;
 }
 
 int main() {
